@@ -5,9 +5,8 @@ set -e
 # KONFIGURASI
 ################
 ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
-ISO_FILE="win11-gamer.iso"   # nama bebas, isi Windows Server 2012 R2
+ISO_FILE="win-server.iso"   # isinya Windows Server 2012 R2
 
-# ⛔ JANGAN PAKAI /var
 DISK_FILE="$HOME/win11.qcow2"
 DISK_SIZE="64G"
 
@@ -32,7 +31,7 @@ command -v qemu-system-x86_64 >/dev/null || { echo "❌ qemu-system-x86_64 tidak
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"
 
-# BUAT DISK HANYA JIKA BELUM ADA
+# BUAT DISK JIKA BELUM ADA
 if [ ! -f "$DISK_FILE" ]; then
   echo "📀 Membuat disk $DISK_FILE"
   qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
@@ -50,7 +49,7 @@ fi
 ################
 if [ ! -f "$FLAG_FILE" ]; then
   echo "⚠️ MODE INSTALL WINDOWS SERVER 2012 R2 (BIOS)"
-  echo "👉 Install sampai MASUK DESKTOP, lalu ketik: xong"
+  echo "👉 Tunggu sampai MASUK DESKTOP, lalu ketik: xong"
 
   qemu-system-x86_64 \
     -enable-kvm \
@@ -58,11 +57,17 @@ if [ ! -f "$FLAG_FILE" ]; then
     -smp "$CORES" \
     -m "$RAM" \
     -machine pc \
-    -drive file="$DISK_FILE",format=qcow2 \
+    \
+    -device ich9-ahci,id=ahci \
+    -drive file="$DISK_FILE",format=qcow2,if=none,id=drive0,cache=writeback,aio=native \
+    -device ide-hd,drive=drive0,bus=ahci.0 \
+    \
     -drive file="$ISO_FILE",media=cdrom \
     -boot order=d \
+    \
     -netdev user,id=net0,hostfwd=tcp::3389-:3389 \
     -device e1000,netdev=net0 \
+    \
     -vnc "$VNC_DISPLAY" \
     -usb -device usb-tablet &
 
@@ -74,7 +79,7 @@ if [ ! -f "$FLAG_FILE" ]; then
       touch "$FLAG_FILE"
       kill "$QEMU_PID"
       rm -f "$ISO_FILE"
-      echo "✅ INSTALL SELESAI. RESTART SERVER AMAN."
+      echo "✅ INSTALL SELESAI – REBOOT SERVER AMAN"
       exit 0
     fi
   done
@@ -91,9 +96,15 @@ qemu-system-x86_64 \
   -smp "$CORES" \
   -m "$RAM" \
   -machine pc \
-  -drive file="$DISK_FILE",format=qcow2 \
+  \
+  -device ich9-ahci,id=ahci \
+  -drive file="$DISK_FILE",format=qcow2,if=none,id=drive0,cache=writeback,aio=native \
+  -device ide-hd,drive=drive0,bus=ahci.0 \
+  \
   -boot order=c \
+  \
   -netdev user,id=net0,hostfwd=tcp::3389-:3389 \
   -device e1000,netdev=net0 \
+  \
   -vnc "$VNC_DISPLAY" \
   -usb -device usb-tablet
