@@ -1,43 +1,42 @@
 #!/usr/bin/env bash
 set -e
 
-################
-# KONFIGURASI
-################
+### CONFIG ###
 ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
-ISO_FILE="$HOME/win-server.iso"
+ISO_FILE="win-server.iso"
 
-DISK_FILE="$HOME/win11.qcow2"
+DISK_FILE="$HOME/win11.qcow2"     # ✅ PERSISTENT
 DISK_SIZE="64G"
 
 RAM="8G"
 CORES="4"
-VNC_DISPLAY=":0"
 
-################
-# CEK SISTEM
-################
+VNC_DISPLAY=":0"
+RDP_PORT="3389"
+
+FLAG_FILE="$HOME/installed.flag" # ✅ SEJALUR DENGAN DISK
+WORKDIR="$HOME/windows-idx"
+
+### CHECK ###
 [ -e /dev/kvm ] || { echo "❌ /dev/kvm tidak ada"; exit 1; }
 command -v qemu-system-x86_64 >/dev/null || { echo "❌ qemu tidak ada"; exit 1; }
 
-################
-# PERSIAPAN
-################
-mkdir -p "$HOME/windows-idx"
-cd "$HOME/windows-idx"
+### PREP ###
+mkdir -p "$WORKDIR"
+cd "$WORKDIR"
 
 [ -f "$DISK_FILE" ] || qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
-[ -f "$ISO_FILE" ] || wget --no-check-certificate -O "$ISO_FILE" "$ISO_URL"
 
-DISK_MB=$(du -m "$DISK_FILE" | cut -f1)
+if [ ! -f "$FLAG_FILE" ]; then
+  [ -f "$ISO_FILE" ] || wget --no-check-certificate -O "$ISO_FILE" "$ISO_URL"
+fi
 
-################
-# MODE INSTALL
-################
-if [ "$DISK_MB" -lt 2000 ]; then
-  echo "⚠️ MODE INSTALL WINDOWS SERVER 2012 R2"
-  echo "ℹ️ Jangan tutup QEMU"
-  echo "ℹ️ Biarkan Windows reboot sendiri"
+#################
+# RUN QEMU
+#################
+if [ ! -f "$FLAG_FILE" ]; then
+  echo "⚠️ MODE INSTALL WINDOWS SERVER 2012 R2 (BIOS)"
+  echo "👉 Install sampai MASUK DESKTOP, lalu shutdown Windows"
 
   qemu-system-x86_64 \
     -enable-kvm \
@@ -59,13 +58,12 @@ if [ "$DISK_MB" -lt 2000 ]; then
     -vnc "$VNC_DISPLAY" \
     -usb -device usb-tablet
 
+  touch "$FLAG_FILE"
+  echo "✅ INSTALL SELESAI – DATA AMAN SAAT RESTART"
   exit 0
 fi
 
-################
-# MODE BOOT NORMAL
-################
-echo "✅ MODE BOOT NORMAL WINDOWS SERVER"
+echo "✅ BOOT NORMAL WINDOWS (DATA TETAP ADA)"
 
 qemu-system-x86_64 \
   -enable-kvm \
