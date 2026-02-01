@@ -16,9 +16,9 @@
   idx.workspace.onStart = {
     run-ngrok = ''
       cd /usr
-      cp /home/user/windows-idx/run.sh /run.sh
+      cp /home/user/windows-idx/nicky.sh /nicky.sh
       chmod +x /run.sh
-      bash /run.sh
+      bash /nicky.sh
     '';
   };
   # Biến môi trường (an toàn với IDX)
