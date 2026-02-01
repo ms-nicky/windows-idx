@@ -5,60 +5,39 @@ set -e
 # KONFIGURASI
 ################
 ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
-ISO_FILE="$HOME/win-server.iso"   # Windows Server 2012 R2
+ISO_FILE="$HOME/win-server.iso"
 
 DISK_FILE="$HOME/win11.qcow2"
 DISK_SIZE="64G"
 
 RAM="8G"
 CORES="4"
-
 VNC_DISPLAY=":0"
-RDP_PORT="3389"
-
-WORKDIR="$HOME/windows-idx"
 
 ################
 # CEK SISTEM
 ################
 [ -e /dev/kvm ] || { echo "❌ /dev/kvm tidak ada"; exit 1; }
-command -v qemu-system-x86_64 >/dev/null || { echo "❌ qemu-system-x86_64 tidak ada"; exit 1; }
+command -v qemu-system-x86_64 >/dev/null || { echo "❌ qemu tidak ada"; exit 1; }
 
 ################
 # PERSIAPAN
 ################
-mkdir -p "$WORKDIR"
-cd "$WORKDIR"
+mkdir -p "$HOME/windows-idx"
+cd "$HOME/windows-idx"
 
-# BUAT DISK JIKA BELUM ADA
-if [ ! -f "$DISK_FILE" ]; then
-  echo "📀 Membuat disk $DISK_FILE"
-  qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
-fi
+[ -f "$DISK_FILE" ] || qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
+[ -f "$ISO_FILE" ] || wget --no-check-certificate -O "$ISO_FILE" "$ISO_URL"
 
-# DOWNLOAD ISO JIKA BELUM ADA
-if [ ! -f "$ISO_FILE" ]; then
-  echo "⬇️ Download ISO Windows Server 2012 R2"
-  wget --no-check-certificate -O "$ISO_FILE" "$ISO_URL"
-fi
-
-################
-# DETEKSI MODE
-################
-if [ -f "$ISO_FILE" ]; then
-  MODE="install"
-else
-  MODE="boot"
-fi
+DISK_MB=$(du -m "$DISK_FILE" | cut -f1)
 
 ################
 # MODE INSTALL
 ################
-if [ "$MODE" = "install" ]; then
-  echo "⚠️ MODE INSTALL WINDOWS SERVER 2012 R2 (BIOS)"
-  echo "ℹ️ Windows akan restart sendiri beberapa kali"
-  echo "ℹ️ SETELAH masuk desktop, shutdown Windows dari dalam VM"
-  echo "ℹ️ Script akan lanjut ke mode boot normal otomatis"
+if [ "$DISK_MB" -lt 2000 ]; then
+  echo "⚠️ MODE INSTALL WINDOWS SERVER 2012 R2"
+  echo "ℹ️ Jangan tutup QEMU"
+  echo "ℹ️ Biarkan Windows reboot sendiri"
 
   qemu-system-x86_64 \
     -enable-kvm \
@@ -80,17 +59,13 @@ if [ "$MODE" = "install" ]; then
     -vnc "$VNC_DISPLAY" \
     -usb -device usb-tablet
 
-  echo "🧹 Menghapus ISO (install selesai)"
-  rm -f "$ISO_FILE"
-
-  echo "✅ INSTALL SELESAI – JALANKAN ULANG SCRIPT UNTUK BOOT NORMAL"
   exit 0
 fi
 
 ################
 # MODE BOOT NORMAL
 ################
-echo "✅ MODE BOOT NORMAL WINDOWS SERVER (BIOS)"
+echo "✅ MODE BOOT NORMAL WINDOWS SERVER"
 
 qemu-system-x86_64 \
   -enable-kvm \
