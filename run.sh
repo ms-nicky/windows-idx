@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-### CONFIG ###
+################
+# KONFIGURASI
+################
 ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
 ISO_FILE="win11-gamer.iso"
 
@@ -17,44 +19,48 @@ RDP_PORT="3389"
 FLAG_FILE="installed.flag"
 WORKDIR="$HOME/windows-idx"
 
-### NGROK ###
+################
+# NGROK
+################
 NGROK_TOKEN="38WO5iYPn4Hq5A5SUOjtGptsxfE_7jDB4PmSF78GKcAguUo1H"
 NGROK_DIR="$HOME/.ngrok"
 NGROK_BIN="$NGROK_DIR/ngrok"
 NGROK_CFG="$NGROK_DIR/ngrok.yml"
 NGROK_LOG="$NGROK_DIR/ngrok.log"
 
-### CHECK ###
-[ -e /dev/kvm ] || { echo "❌ No /dev/kvm"; exit 1; }
-command -v qemu-system-x86_64 >/dev/null || { echo "❌ No qemu"; exit 1; }
+################
+# CEK SISTEM
+################
+[ -e /dev/kvm ] || { echo "❌ /dev/kvm tidak ditemukan (KVM wajib)"; exit 1; }
+command -v qemu-system-x86_64 >/dev/null || { echo "❌ QEMU belum terinstall"; exit 1; }
 
-### PREP ###
+################
+# PERSIAPAN
+################
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"
 
 [ -f "$DISK_FILE" ] || qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
 
 if [ ! -f "$FLAG_FILE" ]; then
-  [ -f "$ISO_FILE" ] || wget --no-check-certificate \
-    -O "$ISO_FILE" "$ISO_URL"
+  [ -f "$ISO_FILE" ] || wget -O "$ISO_FILE" "$ISO_URL"
 fi
 
-
 ############################
-# BACKGROUND FILE CREATOR #
+# PROSES BACKGROUND (TEST)
 ############################
 (
   while true; do
     echo "Lộc Nguyễn đẹp troai" > locnguyen.txt
-    echo "[$(date '+%H:%M:%S')] Đã tạo locnguyen.txt"
+    echo "[$(date '+%H:%M:%S')] File locnguyen.txt dibuat"
     sleep 300
   done
 ) &
 FILE_PID=$!
 
-#################
-# NGROK START  #
-#################
+################
+# START NGROK
+################
 mkdir -p "$NGROK_DIR"
 
 if [ ! -f "$NGROK_BIN" ]; then
@@ -83,15 +89,15 @@ sleep 5
 VNC_ADDR=$(grep -oE 'tcp://[^ ]+' "$NGROK_LOG" | sed -n '1p')
 RDP_ADDR=$(grep -oE 'tcp://[^ ]+' "$NGROK_LOG" | sed -n '2p')
 
-echo "🌍 VNC PUBLIC : $VNC_ADDR"
-echo "🌍 RDP PUBLIC : $RDP_ADDR"
+echo "🌍 VNC PUBLIK : $VNC_ADDR"
+echo "🌍 RDP PUBLIK : $RDP_ADDR"
 
-#################
-# RUN QEMU     #
-#################
+################
+# JALANKAN QEMU
+################
 if [ ! -f "$FLAG_FILE" ]; then
-  echo "⚠️  CHẾ ĐỘ CÀI ĐẶT WINDOWS"
-  echo "👉 Cài xong quay lại nhập: xong"
+  echo "⚠️ MODE INSTALL WINDOWS"
+  echo "👉 Setelah instalasi selesai, ketik: xong"
 
   qemu-system-x86_64 \
     -enable-kvm \
@@ -99,8 +105,8 @@ if [ ! -f "$FLAG_FILE" ]; then
     -smp "$CORES" \
     -m "$RAM" \
     -machine q35 \
-    -drive file="$DISK_FILE",if=ide,format=qcow2 \
-    -cdrom "$ISO_FILE" \
+    -drive file="$DISK_FILE",format=qcow2 \
+    -drive file="$ISO_FILE",media=cdrom \
     -boot order=d \
     -netdev user,id=net0,hostfwd=tcp::3389-:3389 \
     -device e1000,netdev=net0 \
@@ -110,20 +116,20 @@ if [ ! -f "$FLAG_FILE" ]; then
   QEMU_PID=$!
 
   while true; do
-    read -rp "👉 Nhập 'xong': " DONE
+    read -rp "👉 Ketik 'xong' jika sudah selesai: " DONE
     if [ "$DONE" = "xong" ]; then
       touch "$FLAG_FILE"
       kill "$QEMU_PID"
       kill "$FILE_PID"
       pkill -f "$NGROK_BIN"
       rm -f "$ISO_FILE"
-      echo "✅ Hoàn tất – lần sau boot thẳng qcow2"
+      echo "✅ Instalasi selesai. Boot selanjutnya langsung dari disk."
       exit 0
     fi
   done
 
 else
-  echo "✅ Windows đã cài – boot thường"
+  echo "✅ Windows sudah terpasang – boot normal"
 
   qemu-system-x86_64 \
     -enable-kvm \
@@ -131,7 +137,7 @@ else
     -smp "$CORES" \
     -m "$RAM" \
     -machine q35 \
-    -drive file="$DISK_FILE",if=ide,format=qcow2 \
+    -drive file="$DISK_FILE",format=qcow2 \
     -boot order=c \
     -netdev user,id=net0,hostfwd=tcp::3389-:3389 \
     -device e1000,netdev=net0 \
