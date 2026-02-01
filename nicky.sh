@@ -5,7 +5,7 @@ set -e
 # KONFIGURASI
 ################
 ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
-ISO_FILE="win-server.iso"   # isinya Windows Server 2012 R2
+ISO_FILE="$HOME/win-server.iso"   # Windows Server 2012 R2
 
 DISK_FILE="$HOME/win11.qcow2"
 DISK_SIZE="64G"
@@ -16,7 +16,6 @@ CORES="4"
 VNC_DISPLAY=":0"
 RDP_PORT="3389"
 
-FLAG_FILE="$HOME/installed.flag"
 WORKDIR="$HOME/windows-idx"
 
 ################
@@ -37,19 +36,29 @@ if [ ! -f "$DISK_FILE" ]; then
   qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
 fi
 
-# DOWNLOAD ISO HANYA SAAT INSTALL
-if [ ! -f "$FLAG_FILE" ]; then
-  if [ ! -f "$ISO_FILE" ]; then
-    wget --no-check-certificate -O "$ISO_FILE" "$ISO_URL"
-  fi
+# DOWNLOAD ISO JIKA BELUM ADA
+if [ ! -f "$ISO_FILE" ]; then
+  echo "⬇️ Download ISO Windows Server 2012 R2"
+  wget --no-check-certificate -O "$ISO_FILE" "$ISO_URL"
+fi
+
+################
+# DETEKSI MODE
+################
+if [ -f "$ISO_FILE" ]; then
+  MODE="install"
+else
+  MODE="boot"
 fi
 
 ################
 # MODE INSTALL
 ################
-if [ ! -f "$FLAG_FILE" ]; then
+if [ "$MODE" = "install" ]; then
   echo "⚠️ MODE INSTALL WINDOWS SERVER 2012 R2 (BIOS)"
-  echo "👉 Tunggu sampai MASUK DESKTOP, lalu ketik: xong"
+  echo "ℹ️ Windows akan restart sendiri beberapa kali"
+  echo "ℹ️ SETELAH masuk desktop, shutdown Windows dari dalam VM"
+  echo "ℹ️ Script akan lanjut ke mode boot normal otomatis"
 
   qemu-system-x86_64 \
     -enable-kvm \
@@ -59,7 +68,7 @@ if [ ! -f "$FLAG_FILE" ]; then
     -machine pc \
     \
     -device ich9-ahci,id=ahci \
-    -drive file="$DISK_FILE",format=qcow2,if=none,id=drive0,cache=writeback,aio=native \
+    -drive file="$DISK_FILE",format=qcow2,if=none,id=drive0,cache=writeback \
     -device ide-hd,drive=drive0,bus=ahci.0 \
     \
     -drive file="$ISO_FILE",media=cdrom \
@@ -69,26 +78,19 @@ if [ ! -f "$FLAG_FILE" ]; then
     -device e1000,netdev=net0 \
     \
     -vnc "$VNC_DISPLAY" \
-    -usb -device usb-tablet &
+    -usb -device usb-tablet
 
-  QEMU_PID=$!
+  echo "🧹 Menghapus ISO (install selesai)"
+  rm -f "$ISO_FILE"
 
-  while true; do
-    read -rp "👉 Ketik 'xong': " DONE
-    if [ "$DONE" = "xong" ]; then
-      touch "$FLAG_FILE"
-      kill "$QEMU_PID"
-      rm -f "$ISO_FILE"
-      echo "✅ INSTALL SELESAI – REBOOT SERVER AMAN"
-      exit 0
-    fi
-  done
+  echo "✅ INSTALL SELESAI – JALANKAN ULANG SCRIPT UNTUK BOOT NORMAL"
+  exit 0
 fi
 
 ################
-# BOOT NORMAL
+# MODE BOOT NORMAL
 ################
-echo "✅ BOOT NORMAL WINDOWS SERVER (BIOS)"
+echo "✅ MODE BOOT NORMAL WINDOWS SERVER (BIOS)"
 
 qemu-system-x86_64 \
   -enable-kvm \
@@ -98,7 +100,7 @@ qemu-system-x86_64 \
   -machine pc \
   \
   -device ich9-ahci,id=ahci \
-  -drive file="$DISK_FILE",format=qcow2,if=none,id=drive0,cache=writeback,aio=native \
+  -drive file="$DISK_FILE",format=qcow2,if=none,id=drive0,cache=writeback \
   -device ide-hd,drive=drive0,bus=ahci.0 \
   \
   -boot order=c \
