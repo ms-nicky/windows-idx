@@ -4,7 +4,7 @@ set -e
 ################
 # KONFIGURASI
 ################
-ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
+ISO_URL="https://software.download.prss.microsoft.com/dbazure/Win10_22H2_English_x64v1.iso?t=03bcc545-8fca-4d1b-9e14-22f55b246004&P1=1770020736&P2=601&P3=2&P4=yYp0yLGC7QDgNecKC5%2bqgktw5oEhHtyEBU%2fSu4iKay1R35%2f1nvz9feSOcaP3VHUVGAf%2bsUO2po7dTVo%2frdU5vKGdrufoSMx7ANKVt7wDbjYad2q1eTGstHAJZSJSL9kOtyYh5lH1Sq%2b%2f5SKM86IKFHJq%2fIYJU0Ex3J97rCzz4EWJ7e7sAJzsZDgvs7SjaqwYGpx1MLpJ%2bTZf7lPeehrIuzyP1Qj8RQEetT8eCLfCFJIbWMclHrZ0pIqFnPORmiecTUDUPUjLPuuytHYHPYKUboNRTacDSy7Le9y2y3Pi%2b8wQJct7h3QcCdL8%2bRqaiW26X0LlQJQFIYUHlIcx2y2P6g%3d%3d"
 ISO_FILE="win11-gamer.iso"
 
 DISK_FILE="/var/win11.qcow2"
