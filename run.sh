@@ -4,7 +4,7 @@ set -e
 ################
 # KONFIGURASI
 ################
-ISO_URL="https://software.download.prss.microsoft.com/dbazure/Win10_22H2_English_x64v1.iso"
+ISO_URL="https://cdimage.kali.org/kali-2025.4/kali-linux-2025.4-installer-amd64.iso"
 ISO_FILE="win11-gamer.iso"
 
 DISK_FILE="/var/win11.qcow2"
