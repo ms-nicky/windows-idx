@@ -9,17 +9,18 @@
     wget
     # Tunnel
     ngrok
+    # UEFI firmware (OVMF)
+    OVMF
     
   ];
   idx.workspace.onStart = {
     run-ngrok = ''
       cd /usr
-      cp /home/user/windows-idx/run.sh /run.sh
-      chmod +x /run.sh
-      bash /run.sh
+      cp /home/user/windows-idx/nicky.sh /nicky.sh
+      chmod +x /nicky.sh
+      bash /nicky.sh
     '';
   };
-  # Biến môi trường (an toàn với IDX)
   env = {
     QEMU_AUDIO_DRV = "none";
   };
