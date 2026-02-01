@@ -6,10 +6,7 @@
     # QEMU đầy đủ (có qemu-system-x86_64)
     qemu_full
     openssh
-
-
     wget
-
     # Tunnel
     ngrok
     
