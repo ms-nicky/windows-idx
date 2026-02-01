@@ -4,10 +4,10 @@ set -e
 ################
 # KONFIGURASI
 ################
-ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
-ISO_FILE="win11-gamer.iso"
+ISO_URL="https://software-download.microsoft.com/pr/Windows_Server_2012_R2_x64.iso"
+ISO_FILE="ws2012r2.iso"
 
-DISK_FILE="/var/win11.qcow2"
+DISK_FILE="/var/ws2012r2.qcow2"
 DISK_SIZE="64G"
 
 RAM="8G"
@@ -17,29 +17,22 @@ VNC_DISPLAY=":0"
 RDP_PORT="3389"
 
 FLAG_FILE="installed.flag"
-WORKDIR="$HOME/windows-idx"
+WORKDIR="$HOME/windows-server-bios"
 
 ################
 # NGROK
 ################
-NGROK_TOKEN="38WO5iYPn4Hq5A5SUOjtGptsxfE_7jDB4PmSF78GKcAguUo1H"
+NGROK_TOKEN="ISI_TOKEN_NGROK_KAMU"
 NGROK_DIR="$HOME/.ngrok"
 NGROK_BIN="$NGROK_DIR/ngrok"
 NGROK_CFG="$NGROK_DIR/ngrok.yml"
 NGROK_LOG="$NGROK_DIR/ngrok.log"
 
 ################
-# OVMF (UEFI)
-################
-OVMF_CODE="/usr/share/OVMF/OVMF_CODE.fd"
-OVMF_VARS="/var/OVMF_VARS.fd"
-
-################
 # CEK SISTEM
 ################
-[ -e /dev/kvm ] || { echo "❌ /dev/kvm tidak ditemukan (KVM wajib)"; exit 1; }
-command -v qemu-system-x86_64 >/dev/null || { echo "❌ QEMU belum terinstall"; exit 1; }
-[ -f "$OVMF_CODE" ] || { echo "❌ OVMF belum terinstall (sudo apt install ovmf)"; exit 1; }
+[ -e /dev/kvm ] || { echo "❌ /dev/kvm tidak ada (harus VPS KVM)"; exit 1; }
+command -v qemu-system-x86_64 >/dev/null || { echo "❌ QEMU tidak ada"; exit 1; }
 
 ################
 # PERSIAPAN
@@ -48,22 +41,10 @@ mkdir -p "$WORKDIR"
 cd "$WORKDIR"
 
 [ -f "$DISK_FILE" ] || qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
-[ -f "$OVMF_VARS" ] || cp /usr/share/OVMF/OVMF_VARS.fd "$OVMF_VARS"
 
 if [ ! -f "$FLAG_FILE" ]; then
   [ -f "$ISO_FILE" ] || wget -O "$ISO_FILE" "$ISO_URL"
 fi
-
-############################
-# PROSES BACKGROUND (TEST)
-############################
-(
-  while true; do
-    echo "Lộc Nguyễn đẹp troai" > locnguyen.txt
-    sleep 300
-  done
-) &
-FILE_PID=$!
 
 ################
 # START NGROK
@@ -93,27 +74,19 @@ pkill -f "$NGROK_BIN" 2>/dev/null || true
   --log=stdout > "$NGROK_LOG" 2>&1 &
 sleep 5
 
-VNC_ADDR=$(grep -oE 'tcp://[^ ]+' "$NGROK_LOG" | sed -n '1p')
-RDP_ADDR=$(grep -oE 'tcp://[^ ]+' "$NGROK_LOG" | sed -n '2p')
-
-echo "🌍 VNC PUBLIK : $VNC_ADDR"
-echo "🌍 RDP PUBLIK : $RDP_ADDR"
-
 ################
 # JALANKAN QEMU
 ################
 if [ ! -f "$FLAG_FILE" ]; then
-  echo "⚠️ MODE INSTALL WINDOWS"
-  echo "👉 Setelah masuk desktop Windows, ketik: xong"
+  echo "⚠️ INSTALL WINDOWS SERVER 2012 R2 (BIOS)"
+  echo "👉 Install sampai MASUK DESKTOP, baru ketik: xong"
 
   qemu-system-x86_64 \
     -enable-kvm \
     -cpu host \
     -smp "$CORES" \
     -m "$RAM" \
-    -machine q35 \
-    -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
-    -drive if=pflash,format=raw,file="$OVMF_VARS" \
+    -machine pc \
     -drive file="$DISK_FILE",format=qcow2 \
     -drive file="$ISO_FILE",media=cdrom \
     -boot order=d \
@@ -129,25 +102,22 @@ if [ ! -f "$FLAG_FILE" ]; then
     if [ "$DONE" = "xong" ]; then
       touch "$FLAG_FILE"
       kill "$QEMU_PID"
-      kill "$FILE_PID"
-      pkill -f "$NGROK_BIN"
       rm -f "$ISO_FILE"
-      echo "✅ Instalasi selesai. Aman untuk reboot."
+      pkill -f "$NGROK_BIN"
+      echo "✅ Install selesai. Reboot AMAN. Data TIDAK hilang."
       exit 0
     fi
   done
 
 else
-  echo "✅ Windows sudah terpasang – boot normal"
+  echo "✅ Boot normal Windows Server 2012 R2 (BIOS)"
 
   qemu-system-x86_64 \
     -enable-kvm \
     -cpu host \
     -smp "$CORES" \
     -m "$RAM" \
-    -machine q35 \
-    -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
-    -drive if=pflash,format=raw,file="$OVMF_VARS" \
+    -machine pc \
     -drive file="$DISK_FILE",format=qcow2 \
     -boot order=c \
     -netdev user,id=net0,hostfwd=tcp::3389-:3389 \
