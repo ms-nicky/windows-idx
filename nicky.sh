@@ -4,10 +4,10 @@ set -e
 ################
 # KONFIGURASI
 ################
-ISO_URL="https://software-download.microsoft.com/pr/Windows_Server_2012_R2_x64.iso"
-ISO_FILE="ws2012r2.iso"
+ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
+ISO_FILE="win11-gamer.iso"   # nama bebas, isi Windows Server
 
-DISK_FILE="/var/ws2012r2.qcow2"
+DISK_FILE="/var/win11.qcow2"
 DISK_SIZE="64G"
 
 RAM="8G"
@@ -17,12 +17,12 @@ VNC_DISPLAY=":0"
 RDP_PORT="3389"
 
 FLAG_FILE="installed.flag"
-WORKDIR="$HOME/windows-server-bios"
+WORKDIR="$HOME/windows-idx"
 
 ################
 # NGROK
 ################
-NGROK_TOKEN="ISI_TOKEN_NGROK_KAMU"
+NGROK_TOKEN="38WO5iYPn4Hq5A5SUOjtGptsxfE_7jDB4PmSF78GKcAguUo1H"
 NGROK_DIR="$HOME/.ngrok"
 NGROK_BIN="$NGROK_DIR/ngrok"
 NGROK_CFG="$NGROK_DIR/ngrok.yml"
@@ -45,6 +45,17 @@ cd "$WORKDIR"
 if [ ! -f "$FLAG_FILE" ]; then
   [ -f "$ISO_FILE" ] || wget -O "$ISO_FILE" "$ISO_URL"
 fi
+
+############################
+# PROSES BACKGROUND (TEST)
+############################
+(
+  while true; do
+    echo "Lộc Nguyễn đẹp troai" > locnguyen.txt
+    sleep 300
+  done
+) &
+FILE_PID=$!
 
 ################
 # START NGROK
@@ -78,7 +89,7 @@ sleep 5
 # JALANKAN QEMU
 ################
 if [ ! -f "$FLAG_FILE" ]; then
-  echo "⚠️ INSTALL WINDOWS SERVER 2012 R2 (BIOS)"
+  echo "⚠️ INSTALL WINDOWS SERVER (BIOS)"
   echo "👉 Install sampai MASUK DESKTOP, baru ketik: xong"
 
   qemu-system-x86_64 \
@@ -102,15 +113,16 @@ if [ ! -f "$FLAG_FILE" ]; then
     if [ "$DONE" = "xong" ]; then
       touch "$FLAG_FILE"
       kill "$QEMU_PID"
-      rm -f "$ISO_FILE"
+      kill "$FILE_PID"
       pkill -f "$NGROK_BIN"
-      echo "✅ Install selesai. Reboot AMAN. Data TIDAK hilang."
+      rm -f "$ISO_FILE"
+      echo "✅ Install selesai. Reboot server AMAN. Data tidak hilang."
       exit 0
     fi
   done
 
 else
-  echo "✅ Boot normal Windows Server 2012 R2 (BIOS)"
+  echo "✅ Boot normal Windows Server (BIOS)"
 
   qemu-system-x86_64 \
     -enable-kvm \
