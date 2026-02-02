@@ -4,7 +4,7 @@ set -e
 ################
 # KONFIGURASI
 ################
-ISO_URL="https://cdimage.kali.org/kali-2025.4/kali-linux-2025.4-installer-amd64.iso"
+ISO_URL="https://go.microsoft.com/fwlink/p/?LinkID=2195443"
 ISO_FILE="win11-gamer.iso"
 
 DISK_FILE="/var/win11.qcow2"
