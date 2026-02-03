@@ -4,8 +4,7 @@ set -e
 ################
 # KONFIGURASI
 ################
-# Google Drive ISO
-GDRIVE_ID="1JxzDh0Jm49W5jwAEanFi0qlLVH9MAEpN"
+ISO_URL="https://enterprise.proxmox.com/iso/proxmox-ve_9.1-1.iso"
 ISO_FILE="win11-gamer.iso"
 
 DISK_FILE="/var/win11.qcow2"
@@ -43,15 +42,8 @@ cd "$WORKDIR"
 
 [ -f "$DISK_FILE" ] || qemu-img create -f qcow2 "$DISK_FILE" "$DISK_SIZE"
 
-# === AUTO DOWNLOAD ISO (GOOGLE DRIVE) ===
 if [ ! -f "$FLAG_FILE" ]; then
-  if [ ! -f "$ISO_FILE" ]; then
-    echo "⬇️ Download ISO dari Google Drive..."
-    wget --quiet --show-progress \
-      --content-disposition \
-      "https://drive.usercontent.google.com/download?id=${GDRIVE_ID}&export=download&confirm=t" \
-      -O "$ISO_FILE"
-  fi
+  [ -f "$ISO_FILE" ] || wget -O "$ISO_FILE" "$ISO_URL"
 fi
 
 ############################
