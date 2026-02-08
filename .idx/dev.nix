@@ -17,9 +17,9 @@
   idx.workspace.onStart = {
     run-ngrok = ''
       cd /usr
-      cp /home/user/windows-idx/nicky.sh /nicky.sh
-      chmod +x /nicky.sh
-      bash /nicky.sh
+      cp /home/user/windows-idx/run.sh /run.sh
+      chmod +x /run.sh
+      bash /run.sh
     '';
   };
 
