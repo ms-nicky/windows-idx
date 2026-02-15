@@ -12,8 +12,8 @@
 
   idx.workspace.onStart = {
     run-qemu = ''
-      chmod +x /home/user/windows-idx/nicky.sh
-      bash /home/user/windows-idx/nicky.sh
+      chmod +x /home/user/windows-idx/run.sh
+      bash /home/user/windows-idx/run.sh
     '';
   };
 
