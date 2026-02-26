@@ -4,7 +4,7 @@ set -e
 ################
 # KONFIGURASI
 ################
-ISO_URL="https://cdimage.kali.org/kali-2024.4/kali-linux-2024.4-installer-amd64.iso"
+ISO_URL="https://cdimage.kali.org/kali-2025.4/kali-linux-2025.4-installer-amd64.iso"
 ISO_FILE="kali-linux.iso"
 
 DISK_FILE="/var/kali.qcow2"
