@@ -12,8 +12,8 @@
 
   idx.workspace.onStart = {
     run-qemu = ''
-      chmod +x /home/user/windows-idx/run.sh
-      bash /home/user/windows-idx/run.sh
+      chmod +x /home/user/windows-idx/kali.sh
+      bash /home/user/windows-idx/kali.sh
     '';
   };
 
